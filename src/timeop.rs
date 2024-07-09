@@ -11,7 +11,7 @@ extargs_error_class!{TimeOpError}
 
 pub fn get_time_utc_str() -> Result<String,Box<dyn Error>> {
 	let now = Utc::now();
-	Ok(format!("{:4}{:2}{:2}{:2}{:2}{:2}",now.year(),now.month(),now.day(),now.hour(),now.minute(),now.second()))
+	Ok(format!("{:04}{:02}{:02}{:02}{:02}{:02}",now.year(),now.month(),now.day(),now.hour(),now.minute(),now.second()))
 }
 
 fn _get_ival_bytes(bs :&[u8],sidx :usize,eidx:usize) -> Result<u32,Box<dyn Error>> {
