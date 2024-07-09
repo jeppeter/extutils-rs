@@ -104,6 +104,7 @@ pub fn load_panicop_commandline(parser :ExtArgsParser) -> Result<(),Box<dyn Erro
 	{
 		"panicdir" : null,
 		"panicenable" : true,
+		"panicbb" : false,
 		"panicverbose" : 3
 	}
 	"#;
