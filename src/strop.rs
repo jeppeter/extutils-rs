@@ -140,3 +140,8 @@ pub fn parse_to_bigint(instr :&str) -> Result<BigInt,Box<dyn Error>> {
 }
 
 
+pub fn str_to_quoted(ins :&str) -> Result<String,Box<dyn Error>> {
+	let mut outs = ins.replace("\\","\\\\");
+	outs = format!("\"{}\"",outs);
+	Ok(outs)
+}

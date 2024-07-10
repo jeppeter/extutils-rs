@@ -17,6 +17,7 @@ use std::error::Error;
 use extlog::*;
 use extlog::loglib::*;
 use crate::procop::{get_exec_dir};
+use crate::strop::{str_to_quoted};
 
 extargs_error_class!{PanicOpError}
 
@@ -81,18 +82,16 @@ fn set_panic_verbose(verbse :i32) -> Result<(),Box<dyn Error>> {
 }
 
 pub fn init_panicop(ns :NameSpaceEx) -> Result<(),Box<dyn Error>> {
-	let mut dname = ns.get_string("panicdir");
+	let dname = ns.get_string("panicdir");
 	let enable = ns.get_bool("panicenable");
 	if !enable {
 		return Ok(());
 	}
 	if dname.len() == 0 {
-		dname = get_exec_dir()?;
+		return Ok(());
 	}
 
-	if dname.len() > 0 {
-		let _ = set_panic_hook(&dname)?;
-	}
+	let _ = set_panic_hook(&dname)?;
 	let iv = ns.get_int("panicverbose") as i32;
 	let _ = set_panic_verbose(iv)?;
 	Ok(())
@@ -100,14 +99,15 @@ pub fn init_panicop(ns :NameSpaceEx) -> Result<(),Box<dyn Error>> {
 
 #[extargs_map_function()]
 pub fn load_panicop_commandline(parser :ExtArgsParser) -> Result<(),Box<dyn Error>> {
-	let cmdline = r#"
-	{
-		"panicdir" : null,
+	let sdir = str_to_quoted(&get_exec_dir()?)?;
+	let cmdline = format!(r#"
+	{{
+		"panicdir" : {},
 		"panicenable" : true,
 		"panicverbose" : 3
-	}
-	"#;
-	extargs_load_commandline!(parser,cmdline)?;
+	}}
+	"#,sdir);
+	extargs_load_commandline!(parser,&cmdline)?;
 	Ok(())
 }
 
