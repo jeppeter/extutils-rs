@@ -17,12 +17,14 @@ use std::error::Error;
 use extlog::*;
 use extlog::loglib::*;
 use crate::procop::{get_exec_dir};
-use crate::strop::{str_to_quoted};
+use crate::strop::{quote_string};
+use std::io::{Write};
 
 extargs_error_class!{PanicOpError}
 
 static mut PANIC_DIR:Option<String> = None;
 static mut PANIC_VERBOSE :i32 = 0;
+static mut PANIC_STDDERR : bool = false;
 
 
 fn set_panic_dir(dname :&str) -> Result<(),Box<dyn Error>> {
@@ -46,21 +48,24 @@ fn panic_hook_fn(info :&PanicInfo<'_>) {
 	outs.push_str(&format!("{}",info));
 	if unsafe {PANIC_DIR.is_some()} {
 		let dname :String = unsafe{format!("{}",PANIC_DIR.as_ref().unwrap())};
-		let ores = mkdir_safe(&dname);
-		if ores.is_ok() {
-			let ores = get_time_utc_str();
+		if dname.len() > 0 {
+			let ores = mkdir_safe(&dname);
 			if ores.is_ok() {
-				let times = ores.unwrap();
-				let fname = format!("{}/panic_{}.log",dname,times);
-				let ores = write_file(&fname,&outs);
+				let ores = get_time_utc_str();
 				if ores.is_ok() {
-					outok = true;
+					let times = ores.unwrap();
+					let fname = format!("{}/panic_{}.log",dname,times);
+					let ores = write_file(&fname,&outs);
+					if ores.is_ok() {
+						outok = true;
+					}
 				}
-			}
+			}			
 		}
 	}
-	if !outok {
-		println!("{}",outs);
+	if !outok || unsafe {PANIC_STDDERR} {
+		eprintln!("{}",outs);
+		let _ = std::io::stderr().flush();
 	}
 	return;
 }
@@ -84,11 +89,13 @@ fn set_panic_verbose(verbse :i32) -> Result<(),Box<dyn Error>> {
 pub fn init_panicop(ns :NameSpaceEx) -> Result<(),Box<dyn Error>> {
 	let dname = ns.get_string("panicdir");
 	let enable = ns.get_bool("panicenable");
+	let panicstderr = ns.get_bool("panicstderr");
 	if !enable {
 		return Ok(());
 	}
-	if dname.len() == 0 {
-		return Ok(());
+
+	unsafe {
+		PANIC_STDDERR = panicstderr;
 	}
 
 	let _ = set_panic_hook(&dname)?;
@@ -99,12 +106,13 @@ pub fn init_panicop(ns :NameSpaceEx) -> Result<(),Box<dyn Error>> {
 
 #[extargs_map_function()]
 pub fn load_panicop_commandline(parser :ExtArgsParser) -> Result<(),Box<dyn Error>> {
-	let sdir = str_to_quoted(&get_exec_dir()?)?;
+	let sdir = quote_string(&get_exec_dir()?)?;
 	let cmdline = format!(r#"
 	{{
 		"panicdir" : {},
 		"panicenable" : true,
-		"panicverbose" : 3
+		"panicverbose" : 3,
+		"panicstderr" : false
 	}}
 	"#,sdir);
 	extargs_load_commandline!(parser,&cmdline)?;
