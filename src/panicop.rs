@@ -86,13 +86,34 @@ fn set_panic_verbose(verbse :i32) -> Result<(),Box<dyn Error>> {
 	Ok(())
 }
 
+fn _clear_panic_max(dname :&str, maxcnt :i64) -> Result<(),Box<dyn Error>> {
+	if dname.len() == 0 || maxcnt == 0 {
+		/*nothing to handle*/
+		return Ok(());
+	}
+
+	if !exists_dir(dname) {
+		return Ok(());
+	}
+
+	let paths = read_dir(dname)?;
+	let exprstr :String = format!("^panic_([0-9]+).log$");
+	
+	for p in paths.iter() {
+		
+	}
+}
+
 pub fn init_panicop(ns :NameSpaceEx) -> Result<(),Box<dyn Error>> {
 	let dname = ns.get_string("panicdir");
 	let enable = ns.get_bool("panicenable");
 	let panicstderr = ns.get_bool("panicstderr");
+	let maxcnt = ns.get_int("panicmaxcnt");
 	if !enable {
 		return Ok(());
 	}
+
+	let _ = _clear_panic_max(&dname,maxcnt);
 
 	unsafe {
 		PANIC_STDDERR = panicstderr;
@@ -109,10 +130,11 @@ pub fn load_panicop_commandline(parser :ExtArgsParser) -> Result<(),Box<dyn Erro
 	let sdir = quote_string(&get_exec_dir()?)?;
 	let cmdline = format!(r#"
 	{{
-		"panicdir" : {},
-		"panicenable" : true,
-		"panicverbose" : 3,
-		"panicstderr" : false
+		"panicdir##to specify directory to store panic file##" : {},
+		"panicenable##if false will no panic handle##" : true,
+		"panicverbose##3 for dump stack##" : 3,
+		"panicstderr##to flush output to stderr ##" : false,
+		"panicmaxcnt##to specified whether count file to clean##" : 0
 	}}
 	"#,sdir);
 	extargs_load_commandline!(parser,&cmdline)?;

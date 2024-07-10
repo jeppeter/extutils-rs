@@ -135,6 +135,20 @@ pub fn exists_file(infile :&str) -> bool {
 	return false;
 }
 
+pub fn exists_dir(indir :&str) -> bool {
+	let dpath = std::path::Path::new(indir);
+	if dpath.exists() {
+		let ores = std::fs::metadata(indir);
+		if ores.is_ok() {
+			let md = ores.unwrap();
+			if md.is_dir() {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 pub fn mkdir_safe(dname :&str) -> Result<(),Box<dyn Error>> {
 	let canres = std::fs::canonicalize(dname);
 	let mut canname = format!("{}",dname);
@@ -173,4 +187,21 @@ pub fn mkdir_safe(dname :&str) -> Result<(),Box<dyn Error>> {
 
 
 	Ok(())
+}
+
+pub fn read_dir(dname :&str) -> Result<Vec<String>,Box<dyn Error>> {
+	let ores = std::fs::read_dir(dname);
+	if ores.is_err() {
+		extargs_new_error!{FileOpError,"read {} error {:?}",dname,ores.err().unwrap()}
+	}
+
+	let paths = ores.unwrap();
+	let mut retv :Vec<String> = vec![];
+	for p in paths {
+		let s = format!("{}",p.display());
+		if s != "." && s != ".." {
+			retv.push(format!("{}",s));
+		}
+	}
+	Ok(retv)
 }
