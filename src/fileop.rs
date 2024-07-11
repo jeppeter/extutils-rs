@@ -7,8 +7,8 @@ use std::fs;
 use std::io::prelude::*;
 use std::io::BufReader;
 
-
 use std::error::Error;
+use crate::strop::{os_str_to_str};
 
 extargs_error_class!{FileOpError}
 
@@ -189,19 +189,30 @@ pub fn mkdir_safe(dname :&str) -> Result<(),Box<dyn Error>> {
 	Ok(())
 }
 
-pub fn read_dir(dname :&str) -> Result<Vec<String>,Box<dyn Error>> {
+pub fn get_dir_items(dname :&str) -> Result<(Vec<String>,Vec<String>),Box<dyn Error>> {
 	let ores = std::fs::read_dir(dname);
 	if ores.is_err() {
 		extargs_new_error!{FileOpError,"read {} error {:?}",dname,ores.err().unwrap()}
 	}
 
 	let paths = ores.unwrap();
-	let mut retv :Vec<String> = vec![];
-	for p in paths {
-		let s = format!("{}",p.display());
-		if s != "." && s != ".." {
-			retv.push(format!("{}",s));
+	let mut others :Vec<String> = vec![];
+	let mut dirs :Vec<String> = vec![];
+	for cp in paths {
+		if cp.is_ok() {
+			let p = cp.unwrap();
+			let ometa = p.metadata();
+			if ometa.is_ok() {
+				let md = ometa.unwrap();
+				if md.is_dir() {
+					dirs.push(format!("{}",os_str_to_str(&p.file_name())?));
+				} else {
+					others.push(format!("{}",os_str_to_str(&p.file_name())?));
+				}
+			} else {
+				others.push(format!("{}",os_str_to_str(&p.file_name())?))
+			}
 		}
 	}
-	Ok(retv)
+	Ok((dirs,others))
 }

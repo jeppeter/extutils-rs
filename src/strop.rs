@@ -6,6 +6,7 @@ use base64;
 use std::error::Error;
 use num_bigint::{BigInt};
 use num_traits::{zero};
+use std::ffi::{OsString};
 
 
 extargs_error_class!{StrOpError}
@@ -144,4 +145,12 @@ pub fn quote_string(ins :&str) -> Result<String,Box<dyn Error>> {
 	let mut outs = ins.replace("\\","\\\\");
 	outs = format!("\"{}\"",outs);
 	Ok(outs)
+}
+
+pub fn os_str_to_str(oss :&OsString) -> Result<String,Box<dyn Error>> {
+	let oret = oss.to_str();
+	if oret.is_none() {
+		extargs_new_error!{StrOpError,"{:?} to str error",oss}
+	}
+	Ok(oret.unwrap().to_string())
 }

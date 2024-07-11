@@ -5,7 +5,7 @@ use extargsparse_worker::{extargs_error_class,extargs_new_error};
 use extargsparse_codegen::{extargs_load_commandline,extargs_map_function};
 use extargsparse_worker::namespace::NameSpaceEx;
 use extargsparse_worker::funccall::ExtArgsParseFunc;
-use crate::fileop::{mkdir_safe,write_file};
+use crate::fileop::{mkdir_safe,write_file,exists_dir,get_dir_items};
 use crate::timeop::{get_time_utc_str};
 use extargsparse_worker::parser::{ExtArgsParser};
 use lazy_static::lazy_static;
@@ -93,15 +93,33 @@ fn _clear_panic_max(dname :&str, maxcnt :i64) -> Result<(),Box<dyn Error>> {
 	}
 
 	if !exists_dir(dname) {
+		debug_trace!("no exists_dir [{}]",dname);
 		return Ok(());
 	}
 
-	let paths = read_dir(dname)?;
+	let mut storeitems :Vec<String> = vec![];
+	let (_,paths) = get_dir_items(dname)?;
 	let exprstr :String = format!("^panic_([0-9]+).log$");
+	let ores = regex::Regex::new(&exprstr);
+	if ores.is_err() {
+		extargs_new_error!{PanicOpError,"compile [{}] error [{:?}]",exprstr,ores.err().unwrap()}
+	}
+	let mexpr = ores.unwrap();
 	
 	for p in paths.iter() {
-		
+		debug_trace!("p [{}]",p);
+		let ores = mexpr.captures(p);
+		if ores.is_some() {
+			let v = ores.unwrap();
+			if v.len() > 1 {
+				storeitems.push(format!("{}",v.get(0).unwrap().as_str()));
+				debug_trace!("item[{}]",v.get(0).unwrap().as_str());
+			}
+		}
 	}
+
+
+	Ok(())
 }
 
 pub fn init_panicop(ns :NameSpaceEx) -> Result<(),Box<dyn Error>> {
@@ -112,6 +130,8 @@ pub fn init_panicop(ns :NameSpaceEx) -> Result<(),Box<dyn Error>> {
 	if !enable {
 		return Ok(());
 	}
+
+	debug_trace!("maxcnt {} dname [{}]",maxcnt,dname);
 
 	let _ = _clear_panic_max(&dname,maxcnt);
 
