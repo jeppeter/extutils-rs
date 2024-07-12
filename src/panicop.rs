@@ -184,7 +184,7 @@ pub fn load_panicop_commandline(parser :ExtArgsParser) -> Result<(),Box<dyn Erro
 		"panicenable##if false will no panic handle##" : true,
 		"panicverbose##3 for dump stack##" : 3,
 		"panicstderr##to flush output to stderr ##" : false,
-		"panicmaxcnt##to specified whether count file to clean##" : 0
+		"panicmaxcnt##to specified whether count file to clean##" : 10
 	}}
 	"#,sdir);
 	extargs_load_commandline!(parser,&cmdline)?;
