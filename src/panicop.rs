@@ -5,7 +5,7 @@ use extargsparse_worker::{extargs_error_class,extargs_new_error};
 use extargsparse_codegen::{extargs_load_commandline,extargs_map_function};
 use extargsparse_worker::namespace::NameSpaceEx;
 use extargsparse_worker::funccall::ExtArgsParseFunc;
-use crate::fileop::{mkdir_safe,write_file,exists_dir,get_dir_items};
+use crate::fileop::{mkdir_safe,write_file,exists_dir,get_dir_items,delete_file};
 use crate::timeop::{get_time_utc_str};
 use extargsparse_worker::parser::{ExtArgsParser};
 use lazy_static::lazy_static;
@@ -86,6 +86,22 @@ fn set_panic_verbose(verbse :i32) -> Result<(),Box<dyn Error>> {
 	Ok(())
 }
 
+#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct PanicLog {
+	idxval :i64,
+	fname :String,
+}
+
+impl PanicLog {
+	fn new(fname :&str, idx :i64) -> Self {
+		Self {
+			fname : format!("{}",fname),
+			idxval : idx,
+		}
+	}
+}
+
+
 fn _clear_panic_max(dname :&str, maxcnt :i64) -> Result<(),Box<dyn Error>> {
 	if dname.len() == 0 || maxcnt == 0 {
 		/*nothing to handle*/
@@ -97,7 +113,6 @@ fn _clear_panic_max(dname :&str, maxcnt :i64) -> Result<(),Box<dyn Error>> {
 		return Ok(());
 	}
 
-	let mut storeitems :Vec<String> = vec![];
 	let (_,paths) = get_dir_items(dname)?;
 	let exprstr :String = format!("^panic_([0-9]+).log$");
 	let ores = regex::Regex::new(&exprstr);
@@ -105,6 +120,7 @@ fn _clear_panic_max(dname :&str, maxcnt :i64) -> Result<(),Box<dyn Error>> {
 		extargs_new_error!{PanicOpError,"compile [{}] error [{:?}]",exprstr,ores.err().unwrap()}
 	}
 	let mexpr = ores.unwrap();
+	let mut logs :Vec<PanicLog> = vec![];
 	
 	for p in paths.iter() {
 		debug_trace!("p [{}]",p);
@@ -112,9 +128,23 @@ fn _clear_panic_max(dname :&str, maxcnt :i64) -> Result<(),Box<dyn Error>> {
 		if ores.is_some() {
 			let v = ores.unwrap();
 			if v.len() > 1 {
-				storeitems.push(format!("{}",v.get(0).unwrap().as_str()));
-				debug_trace!("item[{}]",v.get(0).unwrap().as_str());
+				let cpn = std::path::Path::new(dname).join(v.get(0).unwrap().as_str());
+				let name  = format!("{}",cpn.display());
+				let idxs = format!("{}",v.get(1).unwrap().as_str());
+				let idx = i64::from_str_radix(&idxs,10)?;
+				logs.push(PanicLog::new(&name,idx));
 			}
+		}
+	}
+
+	if logs.len() > maxcnt as usize {
+		/*now to sort*/
+		logs.sort();
+		let mut uidx :usize = 0;
+		while uidx < (logs.len() - maxcnt as usize) {
+			debug_trace!("delete [{}]",logs[uidx].fname);
+			delete_file(&logs[uidx].fname)?;
+			uidx += 1;
 		}
 	}
 
@@ -150,7 +180,7 @@ pub fn load_panicop_commandline(parser :ExtArgsParser) -> Result<(),Box<dyn Erro
 	let sdir = quote_string(&get_exec_dir()?)?;
 	let cmdline = format!(r#"
 	{{
-		"panicdir##to specify directory to store panic file##" : {},
+		"panicdir" : {},
 		"panicenable##if false will no panic handle##" : true,
 		"panicverbose##3 for dump stack##" : 3,
 		"panicstderr##to flush output to stderr ##" : false,
