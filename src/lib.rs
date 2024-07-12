@@ -1,4 +1,6 @@
 
+pub mod randop;
+pub mod hmacop;
 pub mod timeop;
 pub mod strop;
 pub mod fileop;
