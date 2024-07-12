@@ -154,3 +154,21 @@ pub fn os_str_to_str(oss :&OsString) -> Result<String,Box<dyn Error>> {
 	}
 	Ok(oret.unwrap().to_string())
 }
+
+
+pub fn parse_to_u8_array(narr :&[String]) -> Result<Vec<u8>,Box<dyn Error>> {
+	let mut retv :Vec<u8> = Vec::new();
+	for v in narr.iter() {
+		retv.push( parse_u64(v)? as u8);
+	}
+	Ok(retv)
+}
+
+pub fn parse_to_u8_array_str(narr :&[&str]) -> Result<Vec<u8>,Box<dyn Error>> {
+	let mut retv :Vec<u8> = Vec::new();
+	for v in narr.iter() {
+		retv.push( parse_u64(v)? as u8);
+	}
+	Ok(retv)
+}
+
