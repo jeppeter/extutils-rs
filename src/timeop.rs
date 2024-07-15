@@ -114,3 +114,22 @@ pub fn time_left(sticks : u64,cticks :u64, leftmills :i32) -> i32 {
 	}
 	return -1;
 }
+
+pub fn time_trans_value(tmval :i64) -> String {
+    let rets :String;
+    let onative = DateTime::<Utc>::from_timestamp(tmval,0);
+    let dt :DateTime<Utc>;
+
+    if onative.is_some() {
+        //let native = onative.unwrap();
+        //dt = DateTime::<Utc>::from_naive_utc_and_offset(native,Utc);
+        dt = onative.unwrap();
+    } else {
+        dt = chrono::offset::Utc::now();
+    }
+    
+
+    let newdate = dt.format("%Y-%m-%d %H:%M:%S");
+    rets = format!("{}",newdate);
+    return rets;
+}

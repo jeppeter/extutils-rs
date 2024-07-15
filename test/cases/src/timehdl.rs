@@ -28,7 +28,8 @@ use extlog::{debug_trace,debug_buffer_trace,format_buffer_log,format_str_log};
 use extlog::loglib::{log_get_timestamp,log_output_function};
 use extutils::logtrans::{init_log};
 
-use extutils::timeop::{get_time_utc_str,tran_time_utc_from_str};
+use extutils::timeop::{get_time_utc_str,tran_time_utc_from_str,time_trans_value};
+use extutils::strop::{parse_u64};
 
 
 
@@ -48,12 +49,32 @@ fn strtotm_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl
 	Ok(())
 }
 
+fn timestamptime_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl>>>,_ctx :Option<Arc<RefCell<dyn Any>>>) -> Result<(),Box<dyn Error>> {
+	let sarr :Vec<String>;
 
-#[extargs_map_function(strtotm_handler)]
+	init_log(ns.clone())?;
+
+	sarr = ns.get_array("subnargs");
+
+	println!("now {}", get_time_utc_str()?);
+	for f in sarr.iter() {
+		let c = parse_u64(f)? as i64;
+		let s = time_trans_value(c);
+		println!("[{}]=[{}]",f,s);
+	}
+
+	Ok(())
+}
+
+
+#[extargs_map_function(strtotm_handler,timestamptime_handler)]
 pub fn load_time_handler(parser :ExtArgsParser) -> Result<(),Box<dyn Error>> {
 	let cmdline = r#"
 	{
 		"strtotm<strtotm_handler>##str ... to trans tm##" : {
+			"$" : "+"
+		},
+		"timestamptime<timestamptime_handler>##stamp .. to make trans##" : {
 			"$" : "+"
 		}
 	}
