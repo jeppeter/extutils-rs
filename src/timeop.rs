@@ -134,3 +134,8 @@ pub fn utc_time_trans_value(tmval :i64) -> String {
     return rets;
 }
 
+pub fn utc_timestamp() -> i64 {
+	let dt = chrono::offset::Utc::now();
+	return dt.timestamp() as i64;
+}
+
