@@ -115,7 +115,7 @@ pub fn time_left(sticks : u64,cticks :u64, leftmills :i32) -> i32 {
 	return -1;
 }
 
-pub fn time_trans_value(tmval :i64) -> String {
+pub fn utc_time_trans_value(tmval :i64) -> String {
     let rets :String;
     let onative = DateTime::<Utc>::from_timestamp(tmval,0);
     let dt :DateTime<Utc>;
@@ -133,3 +133,4 @@ pub fn time_trans_value(tmval :i64) -> String {
     rets = format!("{}",newdate);
     return rets;
 }
+

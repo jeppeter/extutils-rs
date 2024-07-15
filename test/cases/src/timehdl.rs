@@ -28,7 +28,7 @@ use extlog::{debug_trace,debug_buffer_trace,format_buffer_log,format_str_log};
 use extlog::loglib::{log_get_timestamp,log_output_function};
 use extutils::logtrans::{init_log};
 
-use extutils::timeop::{get_time_utc_str,tran_time_utc_from_str,time_trans_value};
+use extutils::timeop::{get_time_utc_str,tran_time_utc_from_str,utc_time_trans_value};
 use extutils::strop::{parse_u64};
 
 
@@ -59,8 +59,8 @@ fn timestamptime_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgS
 	println!("now {}", get_time_utc_str()?);
 	for f in sarr.iter() {
 		let c = parse_u64(f)? as i64;
-		let s = time_trans_value(c);
-		println!("[{}]=[{}]",f,s);
+		let s = utc_time_trans_value(c);
+		println!("utc[{}]=[{}]",f,s);
 	}
 
 	Ok(())
