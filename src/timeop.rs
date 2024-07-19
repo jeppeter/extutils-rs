@@ -2,6 +2,7 @@
 use chrono::prelude::{DateTime,Utc};
 use chrono::{Datelike,Timelike,TimeZone};
 use extargsparse_worker::{extargs_error_class,extargs_new_error};
+use chrono::Local;
 //use extlog::*;
 //use extlog::loglib::*;
 
@@ -13,6 +14,12 @@ pub fn get_time_utc_str() -> Result<String,Box<dyn Error>> {
 	let now = Utc::now();
 	Ok(format!("{:04}{:02}{:02}{:02}{:02}{:02}",now.year(),now.month(),now.day(),now.hour(),now.minute(),now.second()))
 }
+
+pub fn get_time_local_str() -> Result<String,Box<dyn Error>> {
+	let now = Local::now();
+	Ok(format!("{:04}{:02}{:02}{:02}{:02}{:02}",now.year(),now.month(),now.day(),now.hour(),now.minute(),now.second()))
+}
+
 
 fn _get_ival_bytes(bs :&[u8],sidx :usize,eidx:usize) -> Result<u32,Box<dyn Error>> {
 	if bs.len() < eidx {
