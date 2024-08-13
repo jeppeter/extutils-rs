@@ -7,3 +7,4 @@ pub mod fileop;
 pub mod logtrans;
 pub mod procop;
 pub mod panicop;
+pub mod netop;
