@@ -34,6 +34,7 @@ use extutils::panicop::{load_panicop_commandline};
 mod timehdl;
 mod filehdl;
 mod panictest;
+mod nettst;
 
 #[extargs_map_function()]
 fn main() -> Result<(),Box<dyn Error>> {
@@ -49,6 +50,7 @@ fn main() -> Result<(),Box<dyn Error>> {
 	filehdl::load_file_handler(parser.clone())?;
 	timehdl::load_time_handler(parser.clone())?;
 	panictest::load_panic_handler(parser.clone())?;
+	nettst::load_net_handler(parser.clone())?;
 	load_panicop_commandline(parser.clone())?;
 	//panictst::load_panic_handler(parser.clone())?;
 	let ores = parser.parse_commandline_ex(None,None,None,None);
