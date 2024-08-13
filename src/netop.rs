@@ -3,7 +3,7 @@ use std::error::Error;
 
 extargs_error_class!{NetOpError}
 
-pub fn request_url_string(url :&str) -> Result<(i32,String),Box<dyn Error>> {
+pub fn request_url_get_string(url :&str) -> Result<(i32,String),Box<dyn Error>> {
 	//let client = reqwest::Client::new();
 	let oclient =  reqwest::blocking::ClientBuilder::new().danger_accept_invalid_certs(true).use_rustls_tls().build();
 	if oclient.is_err() {
