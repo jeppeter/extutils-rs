@@ -2,6 +2,7 @@
 
 use extargsparse_worker::{extargs_error_class,extargs_new_error};
 use std::error::Error;
+use sysinfo;
 
 extargs_error_class!{PropOpError}
 
@@ -24,3 +25,14 @@ pub fn get_exec_dir() -> Result<String,Box<dyn Error>> {
 	Ok(format!("{}",parentd.display()))
 }
 
+pub fn get_pid_by_exact_name(n :&str) -> Vec<u64> {
+	let mut retv :Vec<u64> = vec![];
+	let mut system = sysinfo::System::new();
+	system.refresh_all();
+	let nostr = std::ffi::OsStr::new(n);
+	for p in system.processes_by_name(nostr) {
+		retv.push(p.pid().as_u32() as u64);
+	}
+
+	return retv;
+}

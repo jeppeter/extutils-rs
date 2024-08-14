@@ -27,7 +27,7 @@ use extlog::{debug_trace,debug_buffer_trace,format_buffer_log,format_str_log};
 #[allow(unused_imports)]
 use extlog::loglib::{log_get_timestamp,log_output_function};
 use extutils::logtrans::{init_log};
-
+use extutils::procop::{get_pid_by_exact_name};
 
 extargs_error_class!{ProcTestError}
 
@@ -66,15 +66,22 @@ fn waitchld_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImp
 
 fn getpid_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl>>>,_ctx :Option<Arc<RefCell<dyn Any>>>) -> Result<(),Box<dyn Error>> {
 	let sarr =ns.get_array("subnargs");
+	let mut idx :usize;
 	init_log(ns.clone())?;
 
-	let mut system = sysinfo::System::new();
-	system.refresh_all();
 	for n in sarr.iter() {
-		let nostr = std::ffi::OsStr::new(n);
-		for p in system.processes_by_name(nostr) {
-			println!("[{}].pid=[{}]",n,p.pid());
+		let pids = get_pid_by_exact_name(n);
+		print!("pids of {}", n);
+		idx = 0;
+		while idx < pids.len() {
+			if (idx % 5) == 0 {
+				print!("\n    ");
+			}
+			print!(" {:05}",pids[idx]);
+			idx += 1;
 		}
+		print!("\n");
+
 	}
 
 	Ok(())
