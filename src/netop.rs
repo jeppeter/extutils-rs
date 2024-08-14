@@ -3,9 +3,19 @@ use std::error::Error;
 
 extargs_error_class!{NetOpError}
 
-pub fn request_url_get_string(url :&str) -> Result<(i32,String),Box<dyn Error>> {
+pub fn request_url_get_string(url :&str,bcheck :bool) -> Result<(i32,String),Box<dyn Error>> {
 	//let client = reqwest::Client::new();
-	let oclient =  reqwest::blocking::ClientBuilder::new().danger_accept_invalid_certs(true).use_rustls_tls().build();
+	let oclient :reqwest::Result<reqwest::blocking::Client>;
+	if url.starts_with("https:") {
+		if !bcheck {
+			oclient = reqwest::blocking::ClientBuilder::new().danger_accept_invalid_certs(true).use_rustls_tls().build();	
+		} else {
+			oclient = reqwest::blocking::ClientBuilder::new().use_rustls_tls().build();
+		}		
+	} else {
+		oclient = reqwest::blocking::ClientBuilder::new().build();
+	}
+
 	if oclient.is_err() {
 		extargs_new_error!{NetOpError,"can not build client error {:?}",oclient.err().unwrap()}
 	}
