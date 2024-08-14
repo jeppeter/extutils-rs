@@ -62,12 +62,33 @@ fn waitchld_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImp
 	Ok(())
 }
 
+//use sysinfo::SystemExt;
 
-#[extargs_map_function(waitchld_handler)]
+fn getpid_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl>>>,_ctx :Option<Arc<RefCell<dyn Any>>>) -> Result<(),Box<dyn Error>> {
+	let sarr =ns.get_array("subnargs");
+	init_log(ns.clone())?;
+
+	let mut system = sysinfo::System::new();
+	system.refresh_all();
+	for n in sarr.iter() {
+		let nostr = std::ffi::OsStr::new(n);
+		for p in system.processes_by_name(nostr) {
+			println!("[{}].pid=[{}]",n,p.pid());
+		}
+	}
+
+	Ok(())
+}
+
+
+#[extargs_map_function(waitchld_handler,getpid_handler)]
 pub fn load_proc_handler(parser :ExtArgsParser) -> Result<(),Box<dyn Error>> {
 	let cmdline = r#"
 	{
 		"waitrun<waitchld_handler>##args ... to run cmds ##" : {
+			"$" : "+"
+		},
+		"getpid<getpid_handler>##exename ... to filter##" : {
 			"$" : "+"
 		}
 	}
