@@ -23,3 +23,4 @@ pub fn get_exec_dir() -> Result<String,Box<dyn Error>> {
 	let parentd = oparent.unwrap();
 	Ok(format!("{}",parentd.display()))
 }
+

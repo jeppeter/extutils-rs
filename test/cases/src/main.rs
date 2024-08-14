@@ -35,6 +35,7 @@ mod timehdl;
 mod filehdl;
 mod panictest;
 mod nettst;
+mod proctst;
 
 #[extargs_map_function()]
 fn main() -> Result<(),Box<dyn Error>> {
@@ -51,6 +52,7 @@ fn main() -> Result<(),Box<dyn Error>> {
 	timehdl::load_time_handler(parser.clone())?;
 	panictest::load_panic_handler(parser.clone())?;
 	nettst::load_net_handler(parser.clone())?;
+	proctst::load_proc_handler(parser.clone())?;
 	load_panicop_commandline(parser.clone())?;
 	//panictst::load_panic_handler(parser.clone())?;
 	let ores = parser.parse_commandline_ex(None,None,None,None);
