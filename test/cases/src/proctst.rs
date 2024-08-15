@@ -27,7 +27,8 @@ use extlog::{debug_trace,debug_buffer_trace,format_buffer_log,format_str_log};
 #[allow(unused_imports)]
 use extlog::loglib::{log_get_timestamp,log_output_function};
 use extutils::logtrans::{init_log};
-use extutils::procop::{get_pid_by_exact_name};
+use extutils::procop::{get_pid_by_exact_name,get_pid_children_tree};
+use extutils::strop::{parse_u64};
 
 extargs_error_class!{ProcTestError}
 
@@ -87,8 +88,21 @@ fn getpid_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl>
 	Ok(())
 }
 
+fn getchild_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl>>>,_ctx :Option<Arc<RefCell<dyn Any>>>) -> Result<(),Box<dyn Error>> {
+	let sarr =ns.get_array("subnargs");
+	init_log(ns.clone())?;
 
-#[extargs_map_function(waitchld_handler,getpid_handler)]
+	for n in sarr.iter() {
+		let pid = parse_u64(n)?;
+		let ptree = get_pid_children_tree(pid);
+		print!("{}",ptree.to_string(0));
+	}
+
+	Ok(())
+}
+
+
+#[extargs_map_function(waitchld_handler,getpid_handler,getchild_handler)]
 pub fn load_proc_handler(parser :ExtArgsParser) -> Result<(),Box<dyn Error>> {
 	let cmdline = r#"
 	{
@@ -96,6 +110,9 @@ pub fn load_proc_handler(parser :ExtArgsParser) -> Result<(),Box<dyn Error>> {
 			"$" : "+"
 		},
 		"getpid<getpid_handler>##exename ... to filter##" : {
+			"$" : "+"
+		},
+		"getchild<getchild_handler>##pid ... to get children##" : {
 			"$" : "+"
 		}
 	}
