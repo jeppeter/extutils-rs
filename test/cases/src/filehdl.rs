@@ -31,6 +31,8 @@ use extutils::logtrans::{init_log};
 use extutils::fileop::{read_file_bytes,write_file_bytes,read_file,touch_file,delete_file,exists_file};
 use extutils::strop::{encode_base64,split_lines};
 
+extargs_error_class!{FileHdlError}
+
 
 fn fileencbase64_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl>>>,_ctx :Option<Arc<RefCell<dyn Any>>>) -> Result<(),Box<dyn Error>> {
 	let output :String;
@@ -109,8 +111,27 @@ fn delfile_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl
 	Ok(())
 }
 
+fn writefile_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl>>>,_ctx :Option<Arc<RefCell<dyn Any>>>) -> Result<(),Box<dyn Error>> {
+	let sarr :Vec<String>;
+	let ifile :String;
+	let ibytes :Vec<u8>;
 
-#[extargs_map_function(fileencbase64_handler,splitlines_handler,touch_handler,delfile_handler)]
+	init_log(ns.clone())?;
+
+	sarr = ns.get_array("subnargs");
+
+	if sarr.len() < 1 {
+		extargs_new_error!{FileHdlError,"need one file"}
+	}
+
+	ifile = ns.get_string("input");
+	ibytes = read_file_bytes(&ifile)?;
+	let _ = write_file_bytes(&sarr[0],&ibytes)?;
+	Ok(())
+}
+
+
+#[extargs_map_function(fileencbase64_handler,splitlines_handler,touch_handler,delfile_handler,writefile_handler)]
 pub fn load_file_handler(parser :ExtArgsParser) -> Result<(),Box<dyn Error>> {
 	let cmdline = r#"
 	{
@@ -125,6 +146,9 @@ pub fn load_file_handler(parser :ExtArgsParser) -> Result<(),Box<dyn Error>> {
 		},
 		"delfile<delfile_handler>##files ... to delete file##" : {
 			"$" : "+"
+		},
+		"writefile<writefile_handler>##file to write file from input##" : {
+			"$" : 1
 		}
 	}
 	"#;

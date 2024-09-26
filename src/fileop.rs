@@ -12,7 +12,24 @@ use crate::strop::{os_str_to_str};
 
 extargs_error_class!{FileOpError}
 
+fn _get_dirname(fname :&str) -> String {
+	let path = std::path::Path::new(fname);
+	let oparent = path.parent();
+	if oparent.is_none() {
+		return ".".to_string();
+	}
+
+	let parent = oparent.unwrap();
+	return format!("{}",parent.display());
+}
+
 pub fn write_file_bytes(fname :&str, byts :&[u8]) -> Result<(),Box<dyn Error>> {
+	let dname = _get_dirname(fname);
+	if !exists_dir(&dname) {
+		mkdir_safe(&dname)?;
+	}
+
+
 	if fname.len() == 0 {
 		let res = io::stdout().write_all(byts);
 		if res.is_err() {
