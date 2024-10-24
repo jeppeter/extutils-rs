@@ -60,7 +60,8 @@ fn timestamptime_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgS
 	for f in sarr.iter() {
 		let c = parse_u64(f)? as i64;
 		let s = utc_time_trans_value(c);
-		println!("utc[{}]=[{}]",f,s);
+		let ucs = utc_time_trans_value(c + 28800 * 2);
+		println!("utc[{}]=[{}] [{}]",f,s,ucs);
 	}
 	println!("cur utc timestamp [{}]",utc_timestamp());
 
