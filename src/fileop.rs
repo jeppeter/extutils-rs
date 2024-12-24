@@ -52,8 +52,47 @@ pub fn write_file_bytes(fname :&str, byts :&[u8]) -> Result<(),Box<dyn Error>> {
 	Ok(())
 }
 
+pub fn append_file_bytes(fname :&str, byts :&[u8]) -> Result<(),Box<dyn Error>> {
+	let dname = _get_dirname(fname);
+	if !exists_dir(&dname) {
+		mkdir_safe(&dname)?;
+	}
+
+
+	if fname.len() == 0 {
+		let res = io::stdout().write_all(byts);
+		if res.is_err() {
+			let err = res.err().unwrap();
+			extargs_new_error!{FileOpError,"write [stdout] len[{}] error[{:?}]", byts.len(),err}	
+		}
+	} else {
+		let mut opt :std::fs::OpenOptions = std::fs::OpenOptions::new();
+		opt.create(true);
+		opt.write(true);
+		opt.read(true);
+		let ores = opt.open(fname);
+		if ores.is_err() {
+			let err = ores.err().unwrap();
+			extargs_new_error!{FileOpError,"create [{}] error[{:?}]", fname,err}
+		}
+		let mut fp :fs::File = ores.unwrap();
+		let _ = fp.seek(std::io::SeekFrom::End(0))?;
+		let res = fp.write_all(byts);
+		if res.is_err() {
+			let err = res.err().unwrap();
+			extargs_new_error!{FileOpError,"write [{}] len[{}] error[{:?}]", fname, byts.len(),err}	
+		}
+	}
+	Ok(())
+
+}
+
 pub fn write_file(fname :&str, outs :&str) -> Result<(),Box<dyn Error>> {
 	return write_file_bytes(fname,outs.as_bytes());
+}
+
+pub fn append_file(fname :&str, outs :&str) -> Result<(),Box<dyn Error>> {
+	return append_file_bytes(fname,outs.as_bytes());
 }
 
 
