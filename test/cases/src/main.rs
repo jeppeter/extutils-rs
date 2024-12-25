@@ -32,6 +32,7 @@ use extutils::logtrans::{prepare_log};
 use extutils::panicop::{load_panicop_commandline};
 
 mod timehdl;
+mod strhdl;
 mod filehdl;
 mod panictest;
 mod nettst;
@@ -48,6 +49,7 @@ fn main() -> Result<(),Box<dyn Error>> {
 	"#;
 	extargs_load_commandline!(parser,commandline)?;
 	prepare_log(parser.clone())?;
+	strhdl::load_str_handler(parser.clone())?;
 	filehdl::load_file_handler(parser.clone())?;
 	timehdl::load_time_handler(parser.clone())?;
 	panictest::load_panic_handler(parser.clone())?;

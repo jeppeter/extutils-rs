@@ -7,6 +7,7 @@ use std::error::Error;
 use num_bigint::{BigInt};
 use num_traits::{zero};
 use std::ffi::{OsString};
+use regex::Regex;
 
 
 extargs_error_class!{StrOpError}
@@ -172,3 +173,106 @@ pub fn parse_to_u8_array_str(narr :&[&str]) -> Result<Vec<u8>,Box<dyn Error>> {
 	Ok(retv)
 }
 
+pub fn parse_computer_size_u64(s :&str) -> Result<u64,Box<dyn Error>> {
+	let mut retv :u64 ;
+	let sbytes = s.as_bytes().to_vec();
+	let regs = format!("^([0-9]+).*$");
+	let ores = Regex::new(&regs);
+	if ores.is_err() {
+		extargs_new_error!{StrOpError,"{} compile regex error {:?}",regs,ores.err().unwrap()}
+	}
+
+	let reg = ores.unwrap();
+	let caps = reg.captures(s);
+	if caps.is_none() {
+		extargs_new_error!{StrOpError,"{} not valid computer size", s}
+	}
+	let v = caps.unwrap();
+	let c = format!("{}",v.get(1).map_or("", |m| m.as_str()));
+	let cbytes = c.as_bytes().to_vec();
+
+	match u64::from_str_radix(&c,10) {
+		Ok(v) => {
+			retv = v;
+		},
+		Err(e) => {
+			extargs_new_error!{StrOpError,"parse [{}] error {:?}", s,e}
+		}
+	}
+
+	let idx :usize = cbytes.len();
+	if idx == sbytes.len() {
+		return Ok(retv);
+	} else if idx < (sbytes.len() - 1) {
+		extargs_new_error!{StrOpError,"{} not valid in computer size", s}
+	} else {
+		if sbytes[idx] == b'k' || sbytes[idx] == b'K' {
+			retv *= 1024;
+		} else if sbytes[idx] == b'm' || sbytes[idx] == b'M' {
+			retv *= 1024 * 1024;
+		} else if sbytes[idx] == b'g' || sbytes[idx] == b'G' {
+			retv *= 1024 * 1024 * 1024;
+		} else if sbytes[idx] == b't' || sbytes[idx] == b'T' {
+			retv *= 1024 * 1024 * 1024 * 1024;
+		} else if sbytes[idx] == b'p' || sbytes[idx] == b'P' {
+			retv *= 1024 * 1024 * 1024 * 1024 *1024;
+		} else if sbytes[idx] == b'e' || sbytes[idx] == b'E' {
+			retv *= 1024 * 1024 * 1024 * 1024 *1024 * 1024;
+		} else {
+			extargs_new_error!{StrOpError,"{} not valid computer size",s}
+		}
+	}
+	Ok(retv)
+}
+
+pub fn parse_computer_size_i64(s :&str) -> Result<i64,Box<dyn Error>> {
+	let mut retv :i64 ;
+	let sbytes = s.as_bytes().to_vec();
+	let regs = format!("^(\\-?[0-9]+).*$");
+	let ores = Regex::new(&regs);
+	if ores.is_err() {
+		extargs_new_error!{StrOpError,"{} compile regex error {:?}",regs,ores.err().unwrap()}
+	}
+
+	let reg = ores.unwrap();
+	let caps = reg.captures(s);
+	if caps.is_none() {
+		extargs_new_error!{StrOpError,"{} not valid computer size", s}
+	}
+	let v = caps.unwrap();
+	let c = format!("{}",v.get(1).map_or("", |m| m.as_str()));
+	let cbytes = c.as_bytes().to_vec();
+
+	match i64::from_str_radix(&c,10) {
+		Ok(v) => {
+			retv = v;
+		},
+		Err(e) => {
+			extargs_new_error!{StrOpError,"parse [{}] error {:?}", s,e}
+		}
+	}
+
+	let idx :usize = cbytes.len();
+	if idx == sbytes.len() {
+		return Ok(retv);
+	} else if idx < (sbytes.len() - 1) {
+		extargs_new_error!{StrOpError,"{} not valid in computer size", s}
+	} else {
+		if sbytes[idx] == b'k' || sbytes[idx] == b'K' {
+			retv *= 1024;
+		} else if sbytes[idx] == b'm' || sbytes[idx] == b'M' {
+			retv *= 1024 * 1024;
+		} else if sbytes[idx] == b'g' || sbytes[idx] == b'G' {
+			retv *= 1024 * 1024 * 1024;
+		} else if sbytes[idx] == b't' || sbytes[idx] == b'T' {
+			retv *= 1024 * 1024 * 1024 * 1024;
+		} else if sbytes[idx] == b'p' || sbytes[idx] == b'P' {
+			retv *= 1024 * 1024 * 1024 * 1024 *1024;
+		} else if sbytes[idx] == b'e' || sbytes[idx] == b'E' {
+			retv *= 1024 * 1024 * 1024 * 1024 *1024 * 1024;
+		} else {
+			extargs_new_error!{StrOpError,"{} not valid computer size",s}
+		}
+	}
+	Ok(retv)
+}
