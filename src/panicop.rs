@@ -1,5 +1,6 @@
 
-use std::panic::{set_hook,PanicInfo};
+//use std::panic::{set_hook,PanicInfo};
+use std::panic::{set_hook,PanicHookInfo};
 #[allow(unused_imports)]
 use extargsparse_worker::{extargs_error_class,extargs_new_error};
 use extargsparse_codegen::{extargs_load_commandline,extargs_map_function};
@@ -34,7 +35,30 @@ fn set_panic_dir(dname :&str) -> Result<(),Box<dyn Error>> {
 	Ok(())
 }
 
-fn panic_hook_fn(info :&PanicInfo<'_>) {
+#[allow(static_mut_refs)]
+fn panic_dir_is_some() -> bool {
+	let mut retv :bool = false;
+	unsafe {
+		if PANIC_DIR.is_some() {
+			retv =  true;
+		}
+	}
+	retv
+}
+
+#[allow(static_mut_refs)]
+fn panic_dir_value() -> String {
+	let mut retv :String = "".to_string();
+	if panic_dir_is_some() {
+		unsafe {
+			retv = format!("{}",PANIC_DIR.as_ref().unwrap());	
+		}		
+	}
+	retv
+}
+
+//fn panic_hook_fn(info :&PanicInfo<'_>) {
+fn panic_hook_fn(info :&PanicHookInfo<'_>) {
 	let mut outs = "".to_string();
 	let mut outok : bool = false;
 	let mut verbose :bool = false;
@@ -46,8 +70,8 @@ fn panic_hook_fn(info :&PanicInfo<'_>) {
 		outs.push_str(&format!("{:?}\n",bk));
 	}
 	outs.push_str(&format!("{}",info));
-	if unsafe {PANIC_DIR.is_some()} {
-		let dname :String = unsafe{format!("{}",PANIC_DIR.as_ref().unwrap())};
+	if panic_dir_is_some() {
+		let dname :String = panic_dir_value();
 		if dname.len() > 0 {
 			let ores = mkdir_safe(&dname);
 			if ores.is_ok() {
