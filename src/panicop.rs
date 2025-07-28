@@ -15,7 +15,9 @@ use std::collections::HashMap;
 use backtrace::{Backtrace};
 
 use std::error::Error;
+#[allow(unused_imports)]
 use extlog::*;
+#[allow(unused_imports)]
 use extlog::loglib::*;
 use crate::procop::{get_exec_dir};
 use crate::strop::{quote_string};
@@ -106,7 +108,7 @@ fn set_panic_verbose(verbse :i32) -> Result<(),Box<dyn Error>> {
 	unsafe {
 		PANIC_VERBOSE = verbse;
 	}
-	debug_trace!("PANIC_VERBOSE {}",unsafe{PANIC_VERBOSE});
+	//debug_trace!("PANIC_VERBOSE {}",unsafe{PANIC_VERBOSE});
 	Ok(())
 }
 
@@ -133,7 +135,7 @@ fn _clear_panic_max(dname :&str, maxcnt :i64) -> Result<(),Box<dyn Error>> {
 	}
 
 	if !exists_dir(dname) {
-		debug_trace!("no exists_dir [{}]",dname);
+		//debug_trace!("no exists_dir [{}]",dname);
 		return Ok(());
 	}
 
@@ -147,7 +149,7 @@ fn _clear_panic_max(dname :&str, maxcnt :i64) -> Result<(),Box<dyn Error>> {
 	let mut logs :Vec<PanicLog> = vec![];
 	
 	for p in paths.iter() {
-		debug_trace!("p [{}]",p);
+		//debug_trace!("p [{}]",p);
 		let ores = mexpr.captures(p);
 		if ores.is_some() {
 			let v = ores.unwrap();
@@ -166,7 +168,7 @@ fn _clear_panic_max(dname :&str, maxcnt :i64) -> Result<(),Box<dyn Error>> {
 		logs.sort();
 		let mut uidx :usize = 0;
 		while uidx < (logs.len() - maxcnt as usize) {
-			debug_trace!("delete [{}]",logs[uidx].fname);
+			//debug_trace!("delete [{}]",logs[uidx].fname);
 			delete_file(&logs[uidx].fname)?;
 			uidx += 1;
 		}
@@ -185,7 +187,7 @@ pub fn init_panicop(ns :NameSpaceEx) -> Result<(),Box<dyn Error>> {
 		return Ok(());
 	}
 
-	debug_trace!("maxcnt {} dname [{}]",maxcnt,dname);
+	//debug_trace!("maxcnt {} dname [{}]",maxcnt,dname);
 
 	let _ = _clear_panic_max(&dname,maxcnt);
 
