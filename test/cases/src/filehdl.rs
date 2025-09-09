@@ -28,7 +28,7 @@ use extlog::{debug_trace,debug_buffer_trace,format_buffer_log,format_str_log};
 use extlog::loglib::{log_get_timestamp,log_output_function};
 use extutils::logtrans::{init_log};
 
-use extutils::fileop::{read_file_bytes,write_file_bytes,read_file,touch_file,delete_file,exists_file,append_file_bytes};
+use extutils::fileop::{read_file_bytes,write_file_bytes,read_file,touch_file,delete_file,exists_file,append_file_bytes,append_file,temp_file,temp_dir};
 use extutils::strop::{encode_base64,split_lines};
 
 extargs_error_class!{FileHdlError}
@@ -150,8 +150,75 @@ fn appendfile_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetI
 	Ok(())
 }
 
+fn tempfile_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl>>>,_ctx :Option<Arc<RefCell<dyn Any>>>) -> Result<(),Box<dyn Error>> {
+	let sarr :Vec<String>;
+	let mut idx :usize;
 
-#[extargs_map_function(fileencbase64_handler,splitlines_handler,touch_handler,delfile_handler,writefile_handler,appendfile_handler)]
+	init_log(ns.clone())?;
+
+	sarr = ns.get_array("subnargs");
+
+	if sarr.len() < 1 {
+		extargs_new_error!{FileHdlError,"need one file"}
+	}
+
+	let pattern = format!("{}",sarr[0]);
+	let mut indir :String = "".to_string();
+	if sarr.len() > 1 {
+		indir = format!("{}",sarr[1]);
+	}
+
+	let tmpfile = temp_file(&pattern,&indir)?;
+
+	idx = 2;
+	while idx < sarr.len() {
+		let _ = append_file(&tmpfile,&sarr[idx])?;
+		append_file(&tmpfile,"\n")?;
+		idx += 1;
+	}
+
+	println!("create [{}] tempfile",tmpfile);
+
+	Ok(())
+}
+
+fn tempdir_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl>>>,_ctx :Option<Arc<RefCell<dyn Any>>>) -> Result<(),Box<dyn Error>> {
+	let sarr :Vec<String>;
+	let mut idx :usize;
+
+	init_log(ns.clone())?;
+
+	sarr = ns.get_array("subnargs");
+
+	if sarr.len() < 1 {
+		extargs_new_error!{FileHdlError,"need one file"}
+	}
+
+	let pattern = format!("{}",sarr[0]);
+	let mut indir :String = "".to_string();
+	if sarr.len() > 1 {
+		indir = format!("{}",sarr[1]);
+	}
+
+	let tmpdir = temp_dir(&pattern,&indir)?;
+
+	idx = 2;
+	while idx < sarr.len() {
+		let mut path = std::path::PathBuf::from(&tmpdir);
+		path.push(format!("{}",sarr[idx]));
+		let cname = format!("{}",path.display());
+		touch_file(&cname)?;
+		println!("create [{}]",cname);
+		idx += 1;
+	}
+
+	println!("create [{}] tempdir",tmpdir);
+
+	Ok(())
+}
+
+
+#[extargs_map_function(fileencbase64_handler,splitlines_handler,touch_handler,delfile_handler,writefile_handler,appendfile_handler,tempfile_handler,tempdir_handler)]
 pub fn load_file_handler(parser :ExtArgsParser) -> Result<(),Box<dyn Error>> {
 	let cmdline = r#"
 	{
@@ -172,6 +239,12 @@ pub fn load_file_handler(parser :ExtArgsParser) -> Result<(),Box<dyn Error>> {
 		},
 		"appendfile<appendfile_handler>##file to append from input##" : {
 			"$" : 1
+		},
+		"tempfile<tempfile_handler>##pattern indir appends ... to create tempfile and appends##" : {
+			"$" : "+"
+		},
+		"tempdir<tempdir_handler>##pattern indir names... to create file in tempdir##" : {
+			"$" : "+"
 		}
 	}
 	"#;

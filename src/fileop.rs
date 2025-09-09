@@ -6,6 +6,7 @@ use std::io;
 use std::fs;
 use std::io::prelude::*;
 use std::io::BufReader;
+use regex::Regex;
 
 use std::error::Error;
 use crate::strop::{os_str_to_str};
@@ -271,4 +272,148 @@ pub fn get_dir_items(dname :&str) -> Result<(Vec<String>,Vec<String>),Box<dyn Er
 		}
 	}
 	Ok((dirs,others))
+}
+
+fn _temp_file(prefix :&str , suffix:&str , nrand :usize,indir :&str) -> Result<String,Box<dyn Error>> {
+	let mut builder :tempfile::Builder = tempfile::Builder::new();
+	builder.prefix(prefix).suffix(suffix).rand_bytes(nrand);
+	let fname :String;
+
+	if indir.len() > 0 {
+		let ores = builder.tempfile_in(indir);
+		if ores.is_err() {
+			extargs_new_error!{FileOpError,"tempfile in [{}] error {:?}",indir,ores.err().unwrap()}
+		}
+		fname = format!("{}",ores.unwrap().path().display());
+	} else {
+		let ores = builder.tempfile();
+		if ores.is_err() {
+			extargs_new_error!{FileOpError,"tempfile error {:?}",ores.err().unwrap()}
+		}
+		fname = format!("{}",ores.unwrap().path().display());
+	}
+	Ok(fname)
+}
+
+fn _temp_file_whole_with_dir(whole :&str, indir :&str) -> Result<String,Box<dyn Error>> {
+	let builder :tempfile::Builder = tempfile::Builder::new();
+	let dirn :String;
+	if indir.len() > 0 {
+		let ores = builder.tempdir_in(indir);
+		if ores.is_err() {
+			extargs_new_error!{FileOpError,"cannot create [{}] in",indir}
+		}
+		dirn = format!("{}",ores.unwrap().path().display());
+	} else {
+		let ores = builder.tempdir();
+		if ores.is_err() {
+			extargs_new_error!{FileOpError,"can not tempdir"}
+		}
+		dirn = format!("{}",ores.unwrap().path().display());
+	}
+
+	let mut path = std::path::PathBuf::from(&dirn);
+	path.push(whole);
+	let cname :String = format!("{}",path.display());
+	touch_file(&cname)?;
+	Ok(cname)
+}
+
+pub fn temp_file(pattern :&str, indir :&str) -> Result<String,Box<dyn Error>> {
+	let restr :String = format!("([^X]*)([X]+)(.*)");
+	let ores = Regex::new(&restr);
+	if ores.is_err() {
+		extargs_new_error!{FileOpError,"can not compile [{}] error {:?}", restr,ores.err().unwrap()}
+	}
+	let re = ores.unwrap();
+
+	let caps = re.captures(pattern);
+	match caps {
+		Some(v) => {
+			let prefix = v.get(1).map_or("", |m| m.as_str());
+			let suffix = v.get(3).map_or("", |m| m.as_str());
+			let xstr = v.get(2).map_or("", |m| m.as_str());
+			if xstr.len() >= 3 {
+				return _temp_file(&prefix,&suffix,xstr.len(),indir);
+			}
+			return _temp_file_whole_with_dir(pattern,indir);
+		},
+		None => {
+			return _temp_file_whole_with_dir(pattern,indir);
+		}
+	}
+}
+
+fn _temp_dir(prefix :&str , suffix:&str , nrand :usize,indir :&str) -> Result<String,Box<dyn Error>> {
+	let mut builder :tempfile::Builder = tempfile::Builder::new();
+	builder.prefix(prefix).suffix(suffix).rand_bytes(nrand);
+	let dname :String;
+
+	if indir.len() > 0 {
+		let ores = builder.tempdir_in(indir);
+		if ores.is_err() {
+			extargs_new_error!{FileOpError,"tempdir in [{}] error {:?}",indir,ores.err().unwrap()}
+		}
+		dname = format!("{}",ores.unwrap().path().display());
+	} else {
+		let ores = builder.tempdir();
+		if ores.is_err() {
+			extargs_new_error!{FileOpError,"tempdir error {:?}",ores.err().unwrap()}
+		}
+		dname = format!("{}",ores.unwrap().path().display());
+	}
+	mkdir_safe(&dname)?;
+	Ok(dname)
+}
+
+fn _temp_dir_whole_with_dir(whole :&str, indir :&str) -> Result<String,Box<dyn Error>> {
+	let builder :tempfile::Builder = tempfile::Builder::new();
+	let dirn :String;
+	if indir.len() > 0 {
+		let ores = builder.tempdir_in(indir);
+		if ores.is_err() {
+			extargs_new_error!{FileOpError,"cannot create [{}] in",indir}
+		}
+		dirn = format!("{}",ores.unwrap().path().display());
+	} else {
+		let ores = builder.tempdir();
+		if ores.is_err() {
+			extargs_new_error!{FileOpError,"can not tempdir"}
+		}
+		dirn = format!("{}",ores.unwrap().path().display());
+	}
+
+	let mut path = std::path::PathBuf::from(&dirn);
+	path.push(whole);
+
+	let cname :String = format!("{}",path.display());
+	mkdir_safe(&cname)?;
+	Ok(cname)
+}
+
+
+pub fn temp_dir(pattern :&str, indir :&str) -> Result<String,Box<dyn Error>> {
+	let restr :String = format!("([^X]*)([X]+)(.*)");
+	let ores = Regex::new(&restr);
+	if ores.is_err() {
+		extargs_new_error!{FileOpError,"can not compile [{}] error {:?}", restr,ores.err().unwrap()}
+	}
+	let re = ores.unwrap();
+
+	let caps = re.captures(pattern);
+	match caps {
+		Some(v) => {
+			let prefix = v.get(1).map_or("", |m| m.as_str());
+			let suffix = v.get(3).map_or("", |m| m.as_str());
+			let xstr = v.get(2).map_or("", |m| m.as_str());
+			if xstr.len() >= 3 {
+				return _temp_dir(&prefix,&suffix,xstr.len(),indir);
+			}
+			return _temp_dir_whole_with_dir(pattern,indir);
+		},
+		None => {
+			return _temp_dir_whole_with_dir(pattern,indir);
+		}
+	}
+
 }
