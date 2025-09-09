@@ -24,6 +24,30 @@ fn _get_dirname(fname :&str) -> String {
 	return format!("{}",parent.display());
 }
 
+fn _get_basename(fname :&str) -> String {
+	let path = std::path::Path::new(fname);
+	let ofname = path.file_name();
+	if ofname.is_none() {
+		return format!("{}",fname);
+	}
+
+	let cname = ofname.unwrap();
+	let ostr = cname.to_str();
+	if ostr.is_none() {
+		return format!("{}",fname);
+	}
+
+	return format!("{}",ostr.unwrap());
+}
+
+pub fn base_name(fname :&str) -> String {
+	return _get_basename(fname);
+}
+
+pub fn dir_name(fname :&str) -> String {
+	return _get_dirname(fname);
+}
+
 pub fn write_file_bytes(fname :&str, byts :&[u8]) -> Result<(),Box<dyn Error>> {
 	let dname = _get_dirname(fname);
 	if !exists_dir(&dname) {
