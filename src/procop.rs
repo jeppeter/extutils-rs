@@ -42,6 +42,23 @@ pub fn get_pid_by_exact_name(n :&str) -> Vec<u64> {
 	return retv;
 }
 
+pub fn detach_run(cmds :&Vec<String>) -> Result<u32,Box<dyn Error>> {
+	if cmds.len() < 1 {
+		extargs_new_error!{PropOpError,"need at least one"}
+	}
+	let mut cmdexec : std::process::Command = std::process::Command::new(&cmds[0]);
+	let mut idx :usize;
+	idx = 1;
+	while idx < cmds.len() {
+		cmdexec.arg(&cmds[idx]);
+		idx += 1;
+	}
+
+	let _child = cmdexec.spawn()?;
+
+	Ok(_child.id())
+}
+
 pub struct ProcessTree {
 	pub pid :u64,
 	pub children :Vec<ProcessTree>,
