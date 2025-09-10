@@ -100,6 +100,7 @@ fn is_search_pid(smap :&HashMap<u64,bool>,pid :u64) -> bool {
 	}
 }
 
+#[allow(dangerous_implicit_autorefs)]
 pub fn get_pid_children_tree(pid :u64) -> ProcessTree {
 	let mut system = sysinfo::System::new();
 	let mut rettree :ProcessTree;
