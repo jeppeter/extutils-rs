@@ -33,9 +33,10 @@ use extutils::netop::{request_url_get_string};
 fn request_handler(ns :NameSpaceEx,_optargset :Option<Arc<RefCell<dyn ArgSetImpl>>>,_ctx :Option<Arc<RefCell<dyn Any>>>) -> Result<(),Box<dyn Error>> {
 	let sarr =ns.get_array("subnargs");
 	let bcheck = ns.get_bool("securecheck");
+	let timeout :u32 = ns.get_int("nettimeout") as u32;
 	init_log(ns.clone())?;
 	for c in sarr.iter() {
-		let (sts,s) = request_url_get_string(c,bcheck)?;
+		let (sts,s) = request_url_get_string(c,bcheck,timeout)?;
 		println!("request [{}] status {}\n{}",c,sts,s);
 	}
 	Ok(())
@@ -47,6 +48,7 @@ pub fn load_net_handler(parser :ExtArgsParser) -> Result<(),Box<dyn Error>> {
 	let cmdline = r#"
 	{
 		"securecheck" : false,
+		"nettimeout" : 3000,
 		"request<request_handler>##url ... to trans tm##" : {
 			"$" : "+"
 		}
